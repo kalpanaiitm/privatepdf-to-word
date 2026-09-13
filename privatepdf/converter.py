@@ -23,25 +23,25 @@ class ConversionResult:
 def _looks_like_heading(line: str) -> bool:
     words = line.split()
     return 1 <= len(words) <= 10 and len(line) <= 90 and (
-        line.isupper() or re.match(r"^\d+(?:\.\d+)*\s+\S+", line) is not None
+        line.isupper()
+        or line.istitle()
+        or re.match(r"^\d+(?:\.\d+)*\s+\S+", line) is not None
     )
 
 
 def build_docx(pages: list[str]) -> bytes:
     document = Document()
-    document.add_heading("Converted document", level=1)
     for page_number, text in enumerate(pages, start=1):
         if page_number > 1:
             document.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
-        for raw_block in re.split(r"\n\s*\n", text):
-            block = re.sub(r"[ \t]+", " ", raw_block).strip()
-            if not block:
+        for raw_line in text.splitlines():
+            line = re.sub(r"[ \t]+", " ", raw_line).strip()
+            if not line:
                 continue
-            lines = [line.strip() for line in block.splitlines() if line.strip()]
-            if len(lines) == 1 and _looks_like_heading(lines[0]):
-                document.add_heading(lines[0], level=2)
+            if _looks_like_heading(line):
+                document.add_heading(line, level=2)
             else:
-                document.add_paragraph(" ".join(lines))
+                document.add_paragraph(line)
     output = BytesIO()
     document.save(output)
     return output.getvalue()
