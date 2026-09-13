@@ -14,6 +14,8 @@ def test_sample_pdf_converts_to_valid_docx():
     assert result.character_count > 100
     doc = Document(BytesIO(result.docx_bytes))
     assert "Fictional Project Summary" in "\n".join(p.text for p in doc.paragraphs)
+    assert len([p for p in doc.paragraphs if p.text.strip()]) >= 5
+    assert any(p.text == "Fictional Project Summary" and p.style.name.startswith("Heading") for p in doc.paragraphs)
 
 
 def test_non_pdf_is_rejected():
